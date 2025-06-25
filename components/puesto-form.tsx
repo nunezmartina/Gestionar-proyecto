@@ -1,20 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { ArrowLeft, AlertCircle, Plus, Edit } from "lucide-react"
 
 interface ProyectoPuesto {
   codPP: number
@@ -26,7 +18,6 @@ interface ProyectoPuesto {
     codPuesto: string
     nombrePuesto: string
   }
-  carreras: any[]
 }
 
 interface PuestoFormProps {
@@ -37,50 +28,39 @@ interface PuestoFormProps {
   onSave: (puesto: ProyectoPuesto) => void
 }
 
-const mockPuestos = [
-  { codPuesto: "DEV001", nombrePuesto: "Desarrollador Full Stack" },
-  { codPuesto: "DEV002", nombrePuesto: "Desarrollador Frontend" },
-  { codPuesto: "DEV003", nombrePuesto: "Desarrollador Backend" },
-  { codPuesto: "DES001", nombrePuesto: "Diseñador UX/UI" },
-  { codPuesto: "QA001", nombrePuesto: "Tester QA" },
-  { codPuesto: "PM001", nombrePuesto: "Project Manager" },
-]
-
 export function PuestoForm({ open, onOpenChange, mode, puesto, onSave }: PuestoFormProps) {
   const [formData, setFormData] = useState({
-    cantidadVacantes: 1,
-    cantidadSuPostulaciones: 0,
-    horasDedicadas: 20,
     codPuesto: "",
+    cantidadVacantes: 1,
+    horasDedicadas: 20,
+    cantidadSuPostulaciones: 0,
   })
   const [errors, setErrors] = useState<string[]>([])
-  const [showConfirmation, setShowConfirmation] = useState(false)
 
   useEffect(() => {
     if (puesto && mode === "edit") {
       setFormData({
-        cantidadVacantes: puesto.cantidadVacantes,
-        cantidadSuPostulaciones: puesto.cantidadSuPostulaciones,
-        horasDedicadas: puesto.horasDedicadas,
         codPuesto: puesto.puesto.codPuesto,
+        cantidadVacantes: puesto.cantidadVacantes,
+        horasDedicadas: puesto.horasDedicadas,
+        cantidadSuPostulaciones: puesto.cantidadSuPostulaciones,
       })
     } else {
       setFormData({
-        cantidadVacantes: 1,
-        cantidadSuPostulaciones: 0,
-        horasDedicadas: 20,
         codPuesto: "",
+        cantidadVacantes: 1,
+        horasDedicadas: 20,
+        cantidadSuPostulaciones: 0,
       })
     }
     setErrors([])
-    setShowConfirmation(false)
   }, [puesto, mode, open])
 
   const validateForm = () => {
     const newErrors: string[] = []
 
-    if (!formData.codPuesto) {
-      newErrors.push("Debe seleccionar un puesto")
+    if (!formData.codPuesto.trim()) {
+      newErrors.push("Debe ingresar el código del puesto")
     }
 
     if (formData.cantidadVacantes <= 0) {
@@ -101,157 +81,162 @@ export function PuestoForm({ open, onOpenChange, mode, puesto, onSave }: PuestoF
 
   const handleSubmit = () => {
     if (validateForm()) {
-      setShowConfirmation(true)
+      const puestoData: ProyectoPuesto = {
+        codPP: puesto?.codPP || 0,
+        cantidadVacantes: formData.cantidadVacantes,
+        cantidadSuPostulaciones: formData.cantidadSuPostulaciones,
+        horasDedicadas: formData.horasDedicadas,
+        puesto: {
+          codPuesto: formData.codPuesto,
+          nombrePuesto: `Puesto ${formData.codPuesto}`,
+        },
+      }
+      onSave(puestoData)
     }
   }
 
-  const handleConfirm = () => {
-    const selectedPuesto = mockPuestos.find((p) => p.codPuesto === formData.codPuesto)
-
-    const puestoData: ProyectoPuesto = {
-      codPP: puesto?.codPP || 0,
-      cantidadVacantes: formData.cantidadVacantes,
-      cantidadSuPostulaciones: formData.cantidadSuPostulaciones,
-      horasDedicadas: formData.horasDedicadas,
-      puesto: {
-        codPuesto: formData.codPuesto,
-        nombrePuesto: selectedPuesto?.nombrePuesto || "",
-      },
-      carreras: puesto?.carreras || [],
-    }
-
-    onSave(puestoData)
+  const handleCancel = () => {
+    onOpenChange(false)
   }
 
-  if (showConfirmation) {
-    const selectedPuesto = mockPuestos.find((p) => p.codPuesto === formData.codPuesto)
-
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar {mode === "create" ? "Creación" : "Modificación"}</DialogTitle>
-            {/* Sistema title */}
-            <div className="text-center mb-4 border-b pb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Sistema de Prácticas Profesionales</h2>
-            </div>
-            <DialogDescription>
-              ¿Está seguro que desea {mode === "create" ? "crear" : "modificar"} el puesto "
-              {selectedPuesto?.nombrePuesto}"?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmation(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirm}>Confirmar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    )
-  }
+  if (!open) return null
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Agregar Puesto" : "Modificar Puesto"}</DialogTitle>
-          {/* Sistema title */}
-          <div className="text-center mb-4 border-b pb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Sistema de Prácticas Profesionales</h2>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-6 text-center">
+            <h1 className="text-3xl font-bold text-gray-900">Sistema de Prácticas Profesionales</h1>
           </div>
-          <DialogDescription>
-            {mode === "create"
-              ? "Ingrese los datos del nuevo puesto para el proyecto"
-              : "Modifique los datos del puesto seleccionado"}
-          </DialogDescription>
-        </DialogHeader>
+        </div>
+      </div>
 
-        <div className="space-y-4">
-          {errors.length > 0 && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <ul className="list-disc list-inside space-y-1">
-                  {errors.map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="codPuesto">Puesto *</Label>
-            <Select
-              value={formData.codPuesto}
-              onValueChange={(value) => setFormData({ ...formData, codPuesto: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccione un puesto" />
-              </SelectTrigger>
-              <SelectContent>
-                {mockPuestos.map((puesto) => (
-                  <SelectItem key={puesto.codPuesto} value={puesto.codPuesto}>
-                    {puesto.nombrePuesto} ({puesto.codPuesto})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cantidadVacantes">Cantidad de Vacantes *</Label>
-              <Input
-                id="cantidadVacantes"
-                type="number"
-                min="1"
-                value={formData.cantidadVacantes}
-                onChange={(e) => setFormData({ ...formData, cantidadVacantes: Number.parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="horasDedicadas">Horas Semanales *</Label>
-              <Input
-                id="horasDedicadas"
-                type="number"
-                min="1"
-                max="40"
-                value={formData.horasDedicadas}
-                onChange={(e) => setFormData({ ...formData, horasDedicadas: Number.parseInt(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="cantidadSuPostulaciones">Postulaciones Actuales</Label>
-            <Input
-              id="cantidadSuPostulaciones"
-              type="number"
-              min="0"
-              value={formData.cantidadSuPostulaciones}
-              onChange={(e) =>
-                setFormData({ ...formData, cantidadSuPostulaciones: Number.parseInt(e.target.value) || 0 })
-              }
-              disabled={mode === "create"}
-            />
-            {mode === "create" && (
-              <p className="text-xs text-muted-foreground">
-                Este valor se actualizará automáticamente cuando se reciban postulaciones
-              </p>
-            )}
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back button and title */}
+        <div className="mb-8">
+          <Button variant="outline" onClick={handleCancel} className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {mode === "create" ? "Dar Alta Puesto" : "Modificar Puesto"}
+            </h2>
+            <p className="text-gray-600 mt-1">
+              {mode === "create"
+                ? "Ingrese los datos para dar alta a un puesto"
+                : "Modifique los datos del puesto seleccionado"}
+            </p>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit}>{mode === "create" ? "Crear Puesto" : "Guardar Cambios"}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {/* Form Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Información del Puesto</CardTitle>
+            <CardDescription>
+              {mode === "create"
+                ? "Complete los campos requeridos para dar alta el puesto"
+                : "Modifique los campos necesarios del puesto"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {errors.length > 0 && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <ul className="list-disc list-inside space-y-1">
+                    {errors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="codPuesto">
+                  Código Puesto <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="codPuesto"
+                  placeholder="Ingrese el código del puesto"
+                  value={formData.codPuesto}
+                  onChange={(e) => setFormData({ ...formData, codPuesto: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cantidadVacantes">
+                  Cantidad Vacantes <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cantidadVacantes"
+                  type="number"
+                  min="1"
+                  placeholder="Número de vacantes"
+                  value={formData.cantidadVacantes}
+                  onChange={(e) => setFormData({ ...formData, cantidadVacantes: Number.parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="horasDedicadas">
+                  Horas Dedicadas <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="horasDedicadas"
+                  type="number"
+                  min="1"
+                  max="40"
+                  placeholder="Horas semanales"
+                  value={formData.horasDedicadas}
+                  onChange={(e) => setFormData({ ...formData, horasDedicadas: Number.parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cantidadSuPostulaciones">
+                  Cantidad Máxima de Postulaciones <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cantidadSuPostulaciones"
+                  type="number"
+                  min="0"
+                  placeholder="Número máximo de postulaciones"
+                  value={formData.cantidadSuPostulaciones}
+                  onChange={(e) =>
+                    setFormData({ ...formData, cantidadSuPostulaciones: Number.parseInt(e.target.value) || 0 })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex justify-end space-x-4 pt-6">
+              <Button variant="outline" onClick={handleCancel}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmit}>
+                {mode === "create" ? (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Dar Alta Puesto
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Guardar Cambios
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

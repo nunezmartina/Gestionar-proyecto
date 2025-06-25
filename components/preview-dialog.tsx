@@ -12,13 +12,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Building, GraduationCap, Calendar, Clock, Users } from "lucide-react"
+import { Building, GraduationCap, Calendar, Users } from "lucide-react"
 
 interface Proyecto {
   numeroProyecto: number
   nombreProyecto: string
   descripcionProyecto: string
-  fechaInicioPostulaciones?: string
+  fechaInicioPostulaciones?: string | null
   fechaCierrePostulaciones: string
   fechaInicioActividades: string
   fechaFinProyecto: string
@@ -39,9 +39,9 @@ export function PreviewDialog({ open, onOpenChange, proyecto }: PreviewDialogPro
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
       year: "numeric",
-      month: "long",
-      day: "numeric",
     })
   }
 
@@ -100,7 +100,6 @@ export function PreviewDialog({ open, onOpenChange, proyecto }: PreviewDialogPro
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Descripción</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">{proyecto.descripcionProyecto}</p>
               </div>
 
@@ -108,16 +107,16 @@ export function PreviewDialog({ open, onOpenChange, proyecto }: PreviewDialogPro
                 <div className="flex items-center gap-3 p-3 border rounded-lg">
                   <Building className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium">Empresa</p>
-                    <p className="text-sm text-muted-foreground">{proyecto.nombreEmpresa}</p>
+                    <p className="font-medium">{proyecto.nombreEmpresa}</p>
+                    <p className="text-sm text-muted-foreground">CUIT: 30-12345678-9</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 p-3 border rounded-lg">
                   <GraduationCap className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium">Universidad</p>
-                    <p className="text-sm text-muted-foreground">{proyecto.nombreUniversidad}</p>
+                    <p className="font-medium">{proyecto.nombreUniversidad}</p>
+                    <p className="text-sm text-muted-foreground">CUIT: 30-87654321-0</p>
                   </div>
                 </div>
               </div>
@@ -134,17 +133,29 @@ export function PreviewDialog({ open, onOpenChange, proyecto }: PreviewDialogPro
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {proyecto.fechaInicioPostulaciones && (
-                  <div className="flex justify-between items-center py-2">
-                    <div>
-                      <p className="font-medium">Inicio de Postulaciones</p>
-                      <p className="text-sm text-muted-foreground">Fecha en que se abren las postulaciones</p>
+                {proyecto.fechaInicioPostulaciones ? (
+                  <>
+                    <div className="flex justify-between items-center py-2">
+                      <div>
+                        <p className="font-medium">Inicio de Postulaciones</p>
+                        <p className="text-sm text-muted-foreground">Fecha en que se abren las postulaciones</p>
+                      </div>
+                      <Badge variant="outline">{formatDate(proyecto.fechaInicioPostulaciones)}</Badge>
                     </div>
-                    <Badge variant="outline">{formatDate(proyecto.fechaInicioPostulaciones)}</Badge>
-                  </div>
+                    <Separator />
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center py-2">
+                      <div>
+                        <p className="font-medium">Inicio de Postulaciones</p>
+                        <p className="text-sm text-muted-foreground">Fecha en que se abren las postulaciones</p>
+                      </div>
+                      <Badge variant="outline">-</Badge>
+                    </div>
+                    <Separator />
+                  </>
                 )}
-
-                <Separator />
 
                 <div className="flex justify-between items-center py-2">
                   <div>
@@ -172,65 +183,6 @@ export function PreviewDialog({ open, onOpenChange, proyecto }: PreviewDialogPro
                     <p className="text-sm text-muted-foreground">Fecha estimada de finalización</p>
                   </div>
                   <Badge variant="outline">{formatDate(proyecto.fechaFinProyecto)}</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Estado y Acciones */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Estado del Proyecto
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Estado Actual</p>
-                  <p className="text-sm text-muted-foreground">Código: {proyecto.codEstadoProyecto}</p>
-                </div>
-                <Badge variant={getEstadoBadgeVariant(proyecto.nombreEstadoProyecto)} className="text-sm">
-                  {proyecto.nombreEstadoProyecto}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Información Adicional */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Información Adicional</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="font-medium">Duración Estimada</p>
-                  <p className="text-muted-foreground">
-                    {(() => {
-                      const inicio = new Date(proyecto.fechaInicioActividades)
-                      const fin = new Date(proyecto.fechaFinProyecto)
-                      const diffTime = Math.abs(fin.getTime() - inicio.getTime())
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-                      const meses = Math.floor(diffDays / 30)
-                      const dias = diffDays % 30
-                      return `${meses} meses y ${dias} días`
-                    })()}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="font-medium">Tiempo para Postulaciones</p>
-                  <p className="text-muted-foreground">
-                    {(() => {
-                      const cierre = new Date(proyecto.fechaCierrePostulaciones)
-                      const inicio = new Date(proyecto.fechaInicioActividades)
-                      const diffTime = Math.abs(inicio.getTime() - cierre.getTime())
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-                      return `${diffDays} días`
-                    })()} entre cierre y inicio
-                  </p>
                 </div>
               </div>
             </CardContent>
