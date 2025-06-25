@@ -1,20 +1,28 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Play, Pause, Square, CheckCircle, Users, Settings } from "lucide-react"
+import { Plus, Eye, Edit, Play, Pause, Square, CheckCircle, Settings, Briefcase, GraduationCap } from "lucide-react"
 import { EstadoProyectoDialog } from "@/components/estado-proyecto-dialog"
 import { ProyectoPuestoDialog } from "@/components/proyecto-puesto-dialog"
 import { PreviewDialog } from "@/components/preview-dialog"
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+}
 
 interface Proyecto {
   numeroProyecto: number
   nombreProyecto: string
   descripcionProyecto: string
-  fechaInicioPostulaciones?: string
+  fechaInicioPostulaciones?: string | null
   fechaCierrePostulaciones: string
   fechaInicioActividades: string
   fechaFinProyecto: string
@@ -29,40 +37,79 @@ const mockProyectos: Proyecto[] = [
     numeroProyecto: 1,
     nombreProyecto: "Sistema de Gestión Académica",
     descripcionProyecto: "Desarrollo de sistema para gestión de estudiantes y materias",
-    fechaInicioPostulaciones: "2025-01-15",
+    fechaInicioPostulaciones: null,
     fechaCierrePostulaciones: "2025-02-15",
-    fechaInicioActividades: "2025-03-01",
+    fechaInicioActividades: "2025-03-15",
     fechaFinProyecto: "2025-12-15",
     nombreEmpresa: "TechCorp SA",
-    nombreUniversidad: "Universidad Nacional",
-    nombreEstadoProyecto: "Iniciado",
+    nombreUniversidad: "Universidad Tecnológica Nacional",
+    nombreEstadoProyecto: "Creado",
     codEstadoProyecto: "EST001",
   },
   {
-    numeroProyecto: 2,
-    nombreProyecto: "App Mobile E-commerce",
-    descripcionProyecto: "Aplicación móvil para comercio electrónico",
-    fechaInicioPostulaciones: "2025-02-15",
-    fechaCierrePostulaciones: "2025-03-01",
-    fechaInicioActividades: "2025-04-01",
-    fechaFinProyecto: "2025-11-30",
-    nombreEmpresa: "Digital Solutions",
-    nombreUniversidad: "Universidad Tecnológica",
-    nombreEstadoProyecto: "Creado",
+    numeroProyecto: 6,
+    nombreProyecto: "Sistema de Recursos Humanos",
+    descripcionProyecto: "Plataforma integral para gestión de recursos humanos y nóminas",
+    fechaInicioPostulaciones: "2024-12-01",
+    fechaCierrePostulaciones: "2025-01-31",
+    fechaInicioActividades: "2025-02-28",
+    fechaFinProyecto: "2025-09-30",
+    nombreEmpresa: "HR Solutions",
+    nombreUniversidad: "Universidad de Congreso",
+    nombreEstadoProyecto: "Iniciado",
     codEstadoProyecto: "EST002",
   },
   {
     numeroProyecto: 3,
     nombreProyecto: "Plataforma de Análisis de Datos",
     descripcionProyecto: "Sistema de análisis y visualización de datos empresariales",
-    fechaInicioPostulaciones: "2025-02-01",
+    fechaInicioPostulaciones: "2024-12-28",
     fechaCierrePostulaciones: "2025-02-28",
-    fechaInicioActividades: "2025-03-15",
+    fechaInicioActividades: "2025-03-28",
     fechaFinProyecto: "2025-10-30",
     nombreEmpresa: "DataTech Inc",
-    nombreUniversidad: "Universidad de Ingeniería",
+    nombreUniversidad: "Universidad de Cuyo",
     nombreEstadoProyecto: "En evaluación",
     codEstadoProyecto: "EST003",
+  },
+  {
+    numeroProyecto: 2,
+    nombreProyecto: "App Mobile E-commerce",
+    descripcionProyecto: "Aplicación móvil para comercio electrónico",
+    fechaInicioPostulaciones: "2024-11-01",
+    fechaCierrePostulaciones: "2025-03-01",
+    fechaInicioActividades: "2025-04-01",
+    fechaFinProyecto: "2025-11-30",
+    nombreEmpresa: "Digital Solutions",
+    nombreUniversidad: "Universidad Champagnat",
+    nombreEstadoProyecto: "Suspendido",
+    codEstadoProyecto: "EST004",
+  },
+  {
+    numeroProyecto: 5,
+    nombreProyecto: "Portal de Servicios Ciudadanos",
+    descripcionProyecto: "Plataforma web para trámites y servicios municipales online",
+    fechaInicioPostulaciones: "2024-09-15",
+    fechaCierrePostulaciones: "2024-11-15",
+    fechaInicioActividades: "2024-12-15",
+    fechaFinProyecto: "2025-06-30",
+    nombreEmpresa: "Software Factory",
+    nombreUniversidad: "Universidad del Aconcagua",
+    nombreEstadoProyecto: "Cancelado",
+    codEstadoProyecto: "EST005",
+  },
+  {
+    numeroProyecto: 4,
+    nombreProyecto: "Sistema de Inventario Inteligente",
+    descripcionProyecto: "Desarrollo de sistema automatizado para gestión de inventarios con IA",
+    fechaInicioPostulaciones: "2024-08-01",
+    fechaCierrePostulaciones: "2024-10-01",
+    fechaInicioActividades: "2024-11-01",
+    fechaFinProyecto: "2024-12-20",
+    nombreEmpresa: "Innovation Labs",
+    nombreUniversidad: "Universidad de Mendoza",
+    nombreEstadoProyecto: "Finalizado",
+    codEstadoProyecto: "EST006",
   },
 ]
 
@@ -93,6 +140,12 @@ const getEstadoBadgeClass = (estado: string) => {
       return "bg-yellow-500 hover:bg-yellow-600 text-white"
     case "En evaluación":
       return "bg-orange-500 hover:bg-orange-600 text-white"
+    case "Suspendido":
+      return "bg-red-500 hover:bg-red-600 text-white"
+    case "Finalizado":
+      return "bg-blue-500 hover:bg-blue-600 text-white"
+    case "Cancelado":
+      return "bg-gray-500 hover:bg-gray-600 text-white"
     default:
       return ""
   }
@@ -119,7 +172,21 @@ const getEstadoIcon = (estado: string) => {
 
 export default function GestionarProyectos() {
   const router = useRouter()
-  const [proyectos, setProyectos] = useState<Proyecto[]>(mockProyectos)
+  const searchParams = useSearchParams()
+
+  const [proyectos, setProyectos] = useState<Proyecto[]>(() => {
+    const nuevoProyectoParam = searchParams?.get("nuevoProyecto")
+    if (nuevoProyectoParam) {
+      try {
+        const nuevoProyecto = JSON.parse(decodeURIComponent(nuevoProyectoParam))
+        return [nuevoProyecto, ...mockProyectos]
+      } catch (error) {
+        console.error("Error parsing nuevo proyecto:", error)
+        return mockProyectos
+      }
+    }
+    return mockProyectos
+  })
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedProyecto, setSelectedProyecto] = useState<Proyecto | null>(null)
   const [showEstadoDialog, setShowEstadoDialog] = useState(false)
@@ -138,8 +205,7 @@ export default function GestionarProyectos() {
   }
 
   const handleEditProject = (proyecto: Proyecto) => {
-    // Aquí podrías navegar a una página de edición
-    console.log("Editar proyecto:", proyecto)
+    router.push(`/editar-proyecto/${proyecto.numeroProyecto}`)
   }
 
   const handleChangeEstado = (proyecto: Proyecto) => {
@@ -147,9 +213,12 @@ export default function GestionarProyectos() {
     setShowEstadoDialog(true)
   }
 
-  const handleManagePuestos = (proyecto: Proyecto) => {
-    setSelectedProyecto(proyecto)
-    setShowPuestoDialog(true)
+  const handleManageProyectoPuestos = (proyecto: Proyecto) => {
+    router.push(`/gestion-proyecto-puesto/${proyecto.numeroProyecto}`)
+  }
+
+  const handleManageProyectoPuestoCarreras = (proyecto: Proyecto) => {
+    router.push(`/gestion-proyecto-puesto-carrera/${proyecto.numeroProyecto}`)
   }
 
   const handlePreview = (proyecto: Proyecto) => {
@@ -190,42 +259,61 @@ export default function GestionarProyectos() {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handlePreview(proyecto)}>
-                      <Eye className="h-4 w-4" />
-                      <span className="sr-only">Ver detalles</span>
-                    </Button>
                     <Button variant="outline" size="sm" onClick={() => handleEditProject(proyecto)}>
                       <Edit className="h-4 w-4" />
                       <span className="sr-only">Editar proyecto</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleChangeEstado(proyecto)}>
-                      <Settings className="h-4 w-4" />
-                      <span className="sr-only">Cambiar estado</span>
+                    {proyecto.nombreEstadoProyecto === "Creado" && (
+                      <Button variant="outline" size="sm" onClick={() => handleManageProyectoPuestos(proyecto)}>
+                        <Briefcase className="h-4 w-4" />
+                        <span className="sr-only">Gestionar Proyecto-Puesto</span>
+                      </Button>
+                    )}
+                    {proyecto.nombreEstadoProyecto === "Creado" && (
+                      <Button variant="outline" size="sm" onClick={() => handleManageProyectoPuestoCarreras(proyecto)}>
+                        <GraduationCap className="h-4 w-4" />
+                        <span className="sr-only">Gestionar Proyecto-Puesto-Carrera</span>
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => handlePreview(proyecto)}>
+                      <Eye className="h-4 w-4" />
+                      <span className="sr-only">Ver detalles</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleManagePuestos(proyecto)}>
-                      <Users className="h-4 w-4 mr-1" />
-                      Puestos
-                    </Button>
+                    {proyecto.nombreEstadoProyecto !== "Finalizado" &&
+                      proyecto.nombreEstadoProyecto !== "Cancelado" && (
+                        <Button variant="outline" size="sm" onClick={() => handleChangeEstado(proyecto)}>
+                          <Settings className="h-4 w-4" />
+                          <span className="sr-only">Cambiar estado</span>
+                        </Button>
+                      )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">{proyecto.descripcionProyecto}</p>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
+                  {proyecto.fechaInicioPostulaciones ? (
+                    <div>
+                      <span className="font-medium">Inicio postulaciones:</span>
+                      <p className="text-muted-foreground">{formatDate(proyecto.fechaInicioPostulaciones)}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="font-medium">Inicio postulaciones:</span>
+                      <p className="text-muted-foreground">-</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium">Cierre postulaciones:</span>
+                    <p className="text-muted-foreground">{formatDate(proyecto.fechaCierrePostulaciones)}</p>
+                  </div>
                   <div>
                     <span className="font-medium">Inicio actividades:</span>
-                    <p className="text-muted-foreground">{proyecto.fechaInicioActividades}</p>
+                    <p className="text-muted-foreground">{formatDate(proyecto.fechaInicioActividades)}</p>
                   </div>
                   <div>
                     <span className="font-medium">Fin proyecto:</span>
-                    <p className="text-muted-foreground">{proyecto.fechaFinProyecto}</p>
+                    <p className="text-muted-foreground">{formatDate(proyecto.fechaFinProyecto)}</p>
                   </div>
-                  {proyecto.fechaInicioPostulaciones && (
-                    <div>
-                      <span className="font-medium">Inicio postulaciones:</span>
-                      <p className="text-muted-foreground">{proyecto.fechaInicioPostulaciones}</p>
-                    </div>
-                  )}
                   <div>
                     <span className="font-medium">Estado:</span>
                     <div className="mt-1">
